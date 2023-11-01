@@ -72,56 +72,56 @@ def inverse_kinematics(x_target, y_target, z_target, rx_d, ry_d, rz_d, q_init, l
     return joint_angles
 
 
+def get_new_angles():
+    coords_list_Fbase = read_csv('C:/Users/Obert/Documents/final_vals.csv', 'c')
 
-coords_list_Fbase = read_csv('C:/Users/Obert/Documents/final_vals.csv', 'c')
+    coords_list_Frover = []
 
-coords_list_Frover = []
+    # base frame in world frame
+    T_base = get_transformation_matrix(0, 0 , 31, 0)
 
-# base frame in world frame
-T_base = get_transformation_matrix(0, 0 , 31, 0)
+    # For trover, maybe set a to 150 or offset distance, otherwise try and place direclty over where base was previously
 
-# For trover, maybe set a to 150 or offset distance, otherwise try and place direclty over where base was previously
+    # world frame in rover frame
+    T_rover = get_transformation_matrix(0, 0, -125, 0)
 
-# world frame in rover frame
-T_rover = get_transformation_matrix(0, 0, -125, 0)
+    T_rover_base = T_base * T_rover  
+    for coords in coords_list_Fbase:
+        point_Fbase = Matrix([coords[0], coords[1], coords[2], 1])
+        point_Frover = T_rover_base * point_Fbase
+        new_coords = [point_Frover[0,0], point_Frover[1,0], point_Frover[2,0], coords[3], coords[4], coords[5]]
+        coords_list_Frover.append(new_coords)
 
-T_rover_base = T_base * T_rover  
-for coords in coords_list_Fbase:
-    point_Fbase = Matrix([coords[0], coords[1], coords[2], 1])
-    point_Frover = T_rover_base * point_Fbase
-    new_coords = [point_Frover[0,0], point_Frover[1,0], point_Frover[2,0], coords[3], coords[4], coords[5]]
-    coords_list_Frover.append(new_coords)
-
-#print(coords_list_Frover)
-q_init = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-link_lengths = [114,100,10,96,56.5]
+    #print(coords_list_Frover)
+    q_init = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+    link_lengths = [114,100,10,96,56.5]
 
 
-angle_list = []
-for coords in coords_list_Frover:
-    coords = np.array(coords, dtype='float')
-    joint_angles = inverse_kinematics(coords[0], coords[1], coords[2], np.radians(coords[3]), np.radians(coords[4]), np.radians(coords[5]), q_init, link_lengths)
-    joint_angles = np.degrees(joint_angles)
-    modified_angles = []
+    angle_list = []
+    for coords in coords_list_Frover:
+        coords = np.array(coords, dtype='float')
+        joint_angles = inverse_kinematics(coords[0], coords[1], coords[2], np.radians(coords[3]), np.radians(coords[4]), np.radians(coords[5]), q_init, link_lengths)
+        joint_angles = np.degrees(joint_angles)
+        modified_angles = []
 
-    # change angle so its absolute value is as small as while mainting the same position
-    for angle in joint_angles:
-        while abs(angle) >= 360:
-            if angle > 0:
-                angle -= 360
-            elif angle < 0:
-                angle += 360
+        # change angle so its absolute value is as small as while mainting the same position
+        for angle in joint_angles:
+            while abs(angle) >= 360:
+                if angle > 0:
+                    angle -= 360
+                elif angle < 0:
+                    angle += 360
 
-        if abs(angle) > 180:
-            if angle > 0:
-                angle -= 360
-            elif angle < 0:
-                angle += 360
+            if abs(angle) > 180:
+                if angle > 0:
+                    angle -= 360
+                elif angle < 0:
+                    angle += 360
 
-        modified_angles.append(angle)
+            modified_angles.append(angle)
 
-    angle_list.append(modified_angles)
-print(angle_list)
+        angle_list.append(modified_angles)
+    return angle_list
 
 
 
