@@ -10,8 +10,7 @@ DH=[[0,   0,        114,  q1],
     [100, 0,        0,    q3],
     [10,  -pi/2,    96,   q4],
     [0,   pi/2,     0,    q5],
-    [0,   -pi/2,    56.5, q6]]
-   # [row for gripper ]
+    [0,   -pi/2,    156.5, q6]] # gripper offset by 100 from previous end effector position, which was 56.5
     
 
 def get_transformation_matrix(a, alpha, d, theta):
@@ -90,7 +89,6 @@ T_rover_base = T_base * T_rover
 for coords in coords_list_Fbase:
     point_Fbase = Matrix([coords[0], coords[1], coords[2], 1])
     point_Frover = T_rover_base * point_Fbase
-    point_Frover = point_Frover.evalf(7)
     new_coords = [point_Frover[0,0], point_Frover[1,0], point_Frover[2,0], coords[3], coords[4], coords[5]]
     coords_list_Frover.append(new_coords)
 
@@ -103,26 +101,30 @@ angle_list = []
 for coords in coords_list_Frover:
     coords = np.array(coords, dtype='float')
     joint_angles = inverse_kinematics(coords[0], coords[1], coords[2], np.radians(coords[3]), np.radians(coords[4]), np.radians(coords[5]), q_init, link_lengths)
-    angle_list.append(np.degrees(joint_angles))
+    joint_angles = np.degrees(joint_angles)
+    modified_angles = []
+
+    # change angle so its absolute value is as small as while mainting the same position
+    for angle in joint_angles:
+        while abs(angle) >= 360:
+            if angle > 0:
+                angle -= 360
+            elif angle < 0:
+                angle += 360
+
+        if abs(angle) > 180:
+            if angle > 0:
+                angle -= 360
+            elif angle < 0:
+                angle += 360
+
+        modified_angles.append(angle)
+
+    angle_list.append(modified_angles)
 print(angle_list)
 
 
-# joint_angles = inverse_kinematics(x_target, y_target, z_target, rx_d, ry_d, rz_d, q_init, link_lengths)
 
-# # Convert the joint angles from radians to degrees
-# # use np.degrees()
-# #output the joint angles. You may save the output to a csv file
-
-# print("Joint Angles (Degrees):")
-# print("q1 =",  np.degrees(joint_angles[0]))
-# print("q2 =",  np.degrees(joint_angles[1]))
-# print("q3 =",  np.degrees(joint_angles[2]))
-# print("q4 =",  np.degrees(joint_angles[3]))
-# print("q5 =",  np.degrees(joint_angles[4]))
-# print("q6 =",  np.degrees(joint_angles[5]))
-
-
-# need to add validity check #
 
 
 
